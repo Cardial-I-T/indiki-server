@@ -1,5 +1,6 @@
 const Usuario = require('../model/Usuarios').Usuario;
 const modelUsuario = require('../model/Usuarios');
+
 const axios = require('axios');
 
 function ApiController() {
@@ -54,11 +55,11 @@ async function visualizarUsuario(req, res) {
   };
 
   async function cadastrar(req, res) {
-    const { usuario, senha, nome, email } = req.body;
+    const { nome, email, senha, data_aniversario, cpf } = req.body;
     console.log(req.body);
     try {
-      await modelUsuario.criarUsuario(usuario, senha, nome, email);
-      res.json({ message: `Usuário ${usuario} cadastrado com sucesso` });
+      await modelUsuario.criarUsuario(nome, email, senha, data_aniversario, cpf);
+      res.json({ message: `Usuário ${nome} cadastrado com sucesso` });
     } catch (error) {
       console.error('Erro ao cadastrar usuário:', error);
       res.status(500).json({ errorMessage: 'Erro ao cadastrar usuário', error: error.message  });

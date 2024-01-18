@@ -1,7 +1,7 @@
 const express = require('express');
 const session = require('express-session');
 const app = express();
-
+const webRouter = require('./src/routes/web');
 const apiRouter = require('./src/routes/api');
 const bodyParser = require('body-parser');
 const axios = require('axios'); // Para fazer solicitações HTTP
@@ -27,11 +27,14 @@ app.set('views', [
 
 app.use(express.json());
 
-//app.use('/', webRouter);
+app.use('/', webRouter);
 app.use('/api', apiRouter); // Adicione o prefixo '/api' para as rotas específicas da aplicação
-app.use((req, res, next) => {
-    res.status(404).render('naoexiste');
-  });
+//app.use((req, res, next) => {
+    //res.status(404).render('naoexiste');
+    app.use((req, res, next) => {
+      console.log(`Recebido ${req.method} request para ${req.path}`);
+      next();
+    }); 
 
 const sequelize = require('./src/utils/db'); // Importe a instância do Sequelize do arquivo de configuração
 

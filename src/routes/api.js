@@ -1,8 +1,9 @@
 const express = require("express");
 const ApiController = require("../controllers/ApiController");
-const router = express.Router();
+
 const apiController = ApiController();
 
+const router = express.Router();
 router.use(express.json()); // Middleware para interpretar o corpo da solicitação como JSON
 
 
@@ -15,5 +16,9 @@ router.delete('/cadastro/:usuario_id', apiController.excluir);
 router.post('/login', apiController.logar);
 router.post('/consultar', apiController.consultar);
 router.get('*', apiController.notFound);
+
+
+
+
 
 module.exports = router;

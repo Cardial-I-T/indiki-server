@@ -13,7 +13,6 @@ const Usuario = sequelize.define('usuarios', {
     type: Sequelize.BOOLEAN,
     defaultValue: false,
     
-
   },
   nome: {
     type: Sequelize.STRING,
@@ -72,7 +71,7 @@ const Usuario = sequelize.define('usuarios', {
     },
   },
   data_aniversario: {
-    type: Sequelize.DATEONLY,
+    type: Sequelize.STRING,
     allowNull: false,
     validate:{
         notEmpty: {
@@ -137,9 +136,9 @@ function visualizarUsuario() {
   return Usuario.findAll();
   }
 
-async function criarUsuario(usuario, senha, nome, email) {
+async function criarUsuario(nome, email, senha, data_aniversario, cpf) {
 // Verificar se já existe um usuário com o mesmo nome
-const existingUser = await Usuario.findOne({ where: { usuario } });
+const existingUser = await Usuario.findOne({ where: { nome } });
 if (existingUser) {
   throw new Error('Nome de usuário já existe');
 }
@@ -151,10 +150,12 @@ if (existingEmail) {
 }
 
 return Usuario.create({
-  usuario: usuario,
-  senha: senha,
   nome: nome,
-  email: email
+  email: email,
+  senha: senha,
+  data_aniversario: data_aniversario,
+  cpf: cpf
+  
 });
 }; 
 
