@@ -83,8 +83,12 @@ async function visualizarUsuario(req, res) {
     const { usuario_id } = req.params;
   
     try {
-      await modelUsuario.excluirUsuario(usuario_id);
-      res.json({ message: `Usuário ${usuario_id} excluído com sucesso` });
+      const numRegistrosExcluidos = await modelUsuario.excluirUsuario(usuario_id);
+      if (numRegistrosExcluidos === 0) {
+        res.status(404).json({ message: `Usuário ${usuario_id} não encontrado` });
+      } else {
+        res.json({ message: `Usuário ${usuario_id} excluído com sucesso` });
+      }
     } catch (error) {
       console.error('Erro ao excluir usuário:', error);
       res.status(500).json({ errorMessage: 'Erro ao excluir usuário', error });

@@ -80,8 +80,12 @@ function recompensasController() {
     const { recom_id } = req.params;
   
     try {
-      await modelRecompensas.excluirRecompensas(recom_id);
-      res.json({ message: `Recompensa ${recom_id} excluído com sucesso` });
+      const numRegistrosExcluidos = await modelRecompensas.excluirRecompensas(recom_id);
+      if (numRegistrosExcluidos === 0) {
+        res.status(404).json({ message: `Recompensa ${recom_id} não encontrada` });
+      } else {
+        res.json({ message: `Recompensa ${recom_id} excluída com sucesso` });
+      }
     } catch (error) {
       console.error('Erro ao excluir recompensa:', error);
       res.status(500).json({ errorMessage: 'Erro ao excluir recompensa', error });
