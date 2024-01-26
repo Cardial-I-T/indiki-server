@@ -8,12 +8,12 @@ router.use(express.json()); // Middleware para interpretar o corpo da solicitaç
 
 
 
-//Rotas do API do Sistema de Recompensas
+//Rotas do API do Sistema Venom
 router.post('/register-session', aplicacaoController.criarSessoesVenom);
-router.get('/recompensas/localizar', aplicacaoController.localizarRecompensas);
-router.post('/cadastro/recompensas', aplicacaoController.cadastrarRecompensas);
-router.put('/recompensas/:recom_id', aplicacaoController.atualizarRecompensas);
-router.delete('/recompensas/:recom_id', aplicacaoController.excluirRecom);
+//router.get('/recompensas/localizar', aplicacaoController.localizarRecompensas);
+//router.post('/cadastro/recompensas', aplicacaoController.cadastrarRecompensas);
+//router.put('/recompensas/:recom_id', aplicacaoController.atualizarRecompensas);
+//router.delete('/recompensas/:recom_id', aplicacaoController.excluirRecom);
 
 
 
