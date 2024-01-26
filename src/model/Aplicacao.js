@@ -35,4 +35,19 @@ Sessoes.init({
 Sessoes.belongsTo(Usuarios.Usuario, { foreignKey: 'usuario_id' });
 Usuarios.Usuario.hasMany(Sessoes, { foreignKey: 'usuario_id' });
 
-module.exports = Sessoes;
+function sessoesVenom(usuario_id, token) {
+  // Crie uma nova sessão com o usuario_id e o token
+  return Sessao.create({
+    usuario_id: usuario_id,
+    token: token
+  });
+}
+
+
+
+const modelAplicacao = {
+  Sessoes,
+  sessoesVenom
+}; 
+
+module.exports = modelAplicacao
