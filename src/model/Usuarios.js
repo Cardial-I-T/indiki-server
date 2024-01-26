@@ -112,7 +112,9 @@ const Usuario = sequelize.define('usuarios', {
           
     },
   },
-  
+  empresa:{
+    type: Sequelize.STRING,
+  },
   data_cadastro: {
     type: Sequelize.DATE,
     defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
@@ -159,33 +161,35 @@ return Usuario.create({
 });
 }; 
 
-async function atualizarUsuario(usuario_id, usuario, senha, nome, email) {
+async function atualizarUsuario(cpf, admin, nome, senha, email, data_aniversario, cnpj, empresa) {
   // Verificar se já existe um usuário com o mesmo nome
-  const existingUser = await Usuario.findOne({ where: { usuario, usuario_id: { [Sequelize.Op.ne]: usuario_id } } });
-  if (existingUser) {
-    throw new Error('Nome de usuário já existe');
+  const CPF = await Usuario.findOne({ where: { cpf: cpf } });
+  if (!CPF) {
+    return { message: 'Usuário não encontrado' };
   }
 
-  // Verificar se já existe um usuário com o mesmo email
-  const existingEmail = await Usuario.findOne({ where: { email, usuario_id: { [Sequelize.Op.ne]: usuario_id } } });
-  if (existingEmail) {
-    throw new Error('Email já está em uso');
-  }
+  const updatedUser = {
+    admin: admin,
+    nome: nome,
+    senha: senha,
+    email: email,
+    data_aniversario: data_aniversario,
+    cpf: cpf,
+    cnpj: cnpj,
+    empresa: empresa,
+  };
 
-  return Usuario.update(
-    {
-      usuario: usuario,
-      senha: senha,
-      nome: nome,
-      email: email
-    },
-    {
-      where: {
-        usuario_id: usuario_id
-      }
+  // Exclua o campo data_cadastro, para garantir que não seja atualizado
+  delete updatedUser.data_cadastro;
+
+  return Usuario.update(updatedUser, {
+    where: {
+      cpf: cpf
     }
-  );
-};
+  });
+}
+
+
 
 function excluirUsuario(usuario_id) {
   return Usuario.destroy({

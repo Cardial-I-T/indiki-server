@@ -1,8 +1,78 @@
-const Recompensas = require('../model/Recompensas').Recompensas;
-const modelRecompensas = require('../model/Recompensas');
+const { checkAuthUser } = require('../utils/autenticaUsuarios');
+const { checkAuth } = require('../utils/autenticacao');
+const Sessoes = require('../model/Aplicacao').Sessoes; 
+const modelAplicacao = require('../model/Aplicacao');
 const axios = require('axios');
+const venom = require('venom-bot');
+const fs = require('fs');
+const path = require('path');
 
-function recompensasController() {
+function AplicacaoController() {
+
+  async function criarSessoesVenom(req, res) {
+    const usuario_id = checkAuth(req); // Obtenha o ID do usuário logado
+    console.log(req.body);
+    try {
+      venom
+        .create(
+          'sessionName', // nome da sessão
+            (base64Qr, asciiQR) => {
+              // Aqui você pode exibir o QR Code de base64Qr em sua interface de usuário
+              const base64Data = base64Qr.replace(/^data:image\/png;base64,/, "");
+  
+              fs.writeFile(path.join(__dirname, `../utils/QR/${sessao.session}.png`), base64Data, 'base64', (err) => {
+                if (err) {
+                  console.log('Erro ao salvar a imagem do QR Code:', err);
+                } else {
+                  console.log('Imagem do QR Code salva com sucesso');
+                }
+              });
+              console.log(asciiQR); // Exibe o QR Code no terminal
+            },
+            {
+              headless: false, // Abre o navegador Chromium
+              // Outras opções
+            }
+          
+        )
+        .then((client) => {
+          // Armazena a sessão no banco de dados após a criação bem-sucedida
+          modelAplicacao.criarSessoesVenom(usuario_id, client.getSessionTokenBrowser())
+            .then(sessao => {
+              start(client);
+              res.status(200).send({ message: 'Sessão criada com sucesso' });
+            })
+            .catch(error => {
+              console.log(error);
+              res.status(500).send({ message: 'Erro ao armazenar a sessão no banco de dados' });
+            });
+        })
+        .catch((erro) => {
+          console.log(erro);
+          res.status(500).send({ message: 'Erro ao criar sessão' });
+        });
+    } catch (error) {
+      console.log(error);
+      res.status(500).send({ message: 'Erro ao criar sessão' });
+    }
+  }
+  
+  
+
+  function start(client) {
+    client.onMessage((message) => {
+      if (message.body === 'Olá' && message.isGroupMsg === false) {
+        client
+          .sendText(message.from, 'Bem vindo ao Indiki!')
+          .then((result) => {
+            console.log('Result: ', result); //return object success
+          })
+      }
+    });
+  }
+
+
+
 
 
     async function visualizarRecompensas(req, res) {
@@ -80,12 +150,8 @@ function recompensasController() {
     const { recom_id } = req.params;
   
     try {
-      const numRegistrosExcluidos = await modelRecompensas.excluirRecompensas(recom_id);
-      if (numRegistrosExcluidos === 0) {
-        res.status(404).json({ message: `Recompensa ${recom_id} não encontrada` });
-      } else {
-        res.json({ message: `Recompensa ${recom_id} excluída com sucesso` });
-      }
+      await modelRecompensas.excluirRecompensas(recom_id);
+      res.json({ message: `Recompensa ${recom_id} excluído com sucesso` });
     } catch (error) {
       console.error('Erro ao excluir recompensa:', error);
       res.status(500).json({ errorMessage: 'Erro ao excluir recompensa', error });
@@ -97,8 +163,8 @@ function recompensasController() {
   };
   
   return {
-    
-    visualizarRecompensas: visualizarRecompensas,
+    criarSessoesVenom: criarSessoesVenom,
+    visualizarRecompensas:[checkAuthUser, visualizarRecompensas],
     localizarRecompensas: localizarRecompensas,
     cadastrarRecompensas: cadastrarRecompensas,
     atualizarRecompensas: atualizarRecompensas,
@@ -107,4 +173,4 @@ function recompensasController() {
   };
 }
 
-module.exports = recompensasController;
+module.exports = AplicacaoController;

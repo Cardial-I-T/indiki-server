@@ -24,7 +24,7 @@ async function visualizarUsuario(req, res) {
   }
 
   async function localizar (req, res) {
-    const { usuario_id, usuario , nome, email } = req.query;
+    const { usuario_id, usuario , nome, email, cpf } = req.query;
     const conditions = {};
   
     if (usuario_id) {
@@ -38,6 +38,9 @@ async function visualizarUsuario(req, res) {
     }
     if (email) {
       conditions.email = email;
+    }
+    if (cpf) {
+      conditions.cpf = cpf;
     }
   
     try {
@@ -67,12 +70,12 @@ async function visualizarUsuario(req, res) {
   };
 
   async function atualizar (req, res) {
-    const { usuario_id } = req.params;
-    const { usuario, senha, nome, email } = req.body;
+    const { cpf } = req.params;
+    const { admin, nome, senha, email, data_aniversario, cnpj, empresa } = req.body;
   
     try {
-      await modelUsuario.atualizarUsuario(usuario_id, usuario, senha, nome, email);
-      res.json({ message: `Usuário ${usuario_id} atualizado com sucesso` });
+      await modelUsuario.atualizarUsuario(cpf, admin, nome, senha, email, data_aniversario, cnpj, empresa);
+      res.json({ message: `Usuário ${nome} atualizado com sucesso` });
     } catch (error) {
       console.error('Erro ao atualizar usuário:', error);
       res.status(500).json({ errorMessage: 'Erro ao atualizar usuário', error: error.message  });
@@ -83,8 +86,12 @@ async function visualizarUsuario(req, res) {
     const { usuario_id } = req.params;
   
     try {
-      await modelUsuario.excluirUsuario(usuario_id);
-      res.json({ message: `Usuário ${usuario_id} excluído com sucesso` });
+      const numRegistrosExcluidos = await modelUsuario.excluirUsuario(usuario_id);
+      if (numRegistrosExcluidos === 0) {
+        res.status(404).json({ message: `Usuário ${usuario_id} não encontrado` });
+      } else {
+        res.json({ message: `Usuário ${usuario_id} excluído com sucesso` });
+      }
     } catch (error) {
       console.error('Erro ao excluir usuário:', error);
       res.status(500).json({ errorMessage: 'Erro ao excluir usuário', error });
@@ -92,16 +99,16 @@ async function visualizarUsuario(req, res) {
   };
   
   async function logar(req, res) {
-    const { usuario, senha } = req.body;
+    const { email, senha } = req.body;
   
     try {
       const foundUser = await modelUsuario.Usuario.findOne({
-        where: { usuario, senha },
+        where: { email, senha },
       });
   
-      if (foundUser) {
+      if (foundUser.admin === true) {
         // Autenticação bem-sucedida
-        if (usuario === 'master') {
+        if (email === 'administrador') {
           res.redirect('/cadastrar');
         } else {
           res.redirect('/index');
