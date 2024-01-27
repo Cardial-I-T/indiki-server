@@ -127,43 +127,7 @@ async function visualizarUsuario(req, res) {
     }
   }
   
-  async function consultar(req, res) {
-    const { ip } = req.body;
-    console.log(req.body)
-    if (!ip) {
-      res.status(400).json({ error: 'O campo IP é obrigatório' });
-      return;
-    }
   
-    try {
-      const response = await axios.get(`https://api.bgpview.io/ip/${ip}`);
-      const jsonData = response.data;
-  
-      if (jsonData.data.prefixes && jsonData.data.prefixes.length > 0) {
-        const firstPrefix = jsonData.data.prefixes[0];
-  
-        const asnData = {
-          asn: firstPrefix.asn.asn,
-          name: firstPrefix.asn.name,
-          description: firstPrefix.asn.description,
-          country_code: firstPrefix.asn.country_code
-        };
-  
-        const prefixData = {
-          prefix: firstPrefix.prefix,
-          ip: firstPrefix.ip,
-          cidr: firstPrefix.cidr
-        };
-  
-        res.status(200).json({ jsonData, asnData, prefixData });
-      } else {
-        res.status(404).json({ error: 'Dados do ASN não encontrados' });
-      }
-    } catch (error) {
-      console.error('Erro na função consultar:', error);
-      res.status(500).json({ error: 'Erro ao localizar o IP' });
-    }
-  }
 
   function notFound(request, response) {
     return response.json({ errorMessage: 'Rota não encontrada' });
@@ -177,7 +141,7 @@ async function visualizarUsuario(req, res) {
     atualizar: atualizar,
     excluir: excluir,
     logar: logar,
-    consultar: consultar,
+    
     notFound: notFound
   };
 }
