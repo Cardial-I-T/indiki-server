@@ -14,7 +14,6 @@ router.post('/cadastro', apiController.cadastrar);
 router.put('/cadastro/:cpf', apiController.atualizar);
 router.delete('/cadastro/:usuario_id', apiController.excluir);
 router.post('/login', apiController.logar);
-router.post('/consultar', apiController.consultar);
 router.get('*', apiController.notFound);
 
 
