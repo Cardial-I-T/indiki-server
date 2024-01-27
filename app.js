@@ -5,7 +5,7 @@ const aplicationRouter = require('./src/routes/aplication');
 const rewardsRouter = require('./src/routes/rewards');
 const usersRouter = require('./src/routes/users');
 const bodyParser = require('body-parser');
-const autenticacao = require('./src/utils/autenticacao');
+
 const axios = require('axios'); // Para fazer solicitações HTTP
 require('dotenv').config();
 const cors = require('cors');
@@ -29,7 +29,7 @@ app.set('views', [
 
 app.use(express.json());
 
-app.use('/', autenticacao.checkAuth, aplicationRouter);
+app.use('/', aplicationRouter);
 app.use('/users', usersRouter);
 app.use('/rewards', rewardsRouter);
  // Adicione o prefixo '/api' para as rotas específicas da aplicação
