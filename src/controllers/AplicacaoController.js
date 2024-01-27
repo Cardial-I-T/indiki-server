@@ -45,19 +45,22 @@ function AplicacaoController() {
   
                 // Crie a mensagem de e-mail
                 let mailOptions = {
-                  from: 'indiki@cardealit.com.br', // Use a variável de ambiente casoi queira um email padrão
+                  from: 'indiki@cardealit.com.br', // Use a variável de ambiente caso queira um email padrão
                   to: emailDoUsuario, // Use o e-mail do usuário logado
                   subject: 'Bem vindo ao app Indiki',
-                  text: 'Olá tudo bem? seja muito bem vindo. Para começar escaneie o seguinte QR-CODE:',
+                  html: `<p>Olá tudo bem? seja muito bem vindo. Para começar escaneie o seguinte QR-CODE: </p> <img src="cid:qrCode@nodemailer.com" alt="QR Code" />`,
                   attachments: [
                     {
                       filename: 'qrcode.png',
-                      path: path.join(__dirname, `../utils/QR/${sessao.session}.png`)
+                      path: path.join(__dirname, `../utils/QR/${sessao.session}.png`),
+                      content: qrCode.split("base64,")[1],
+                      encoding: "base64",
+                      cid: "qrCode@nodemailer.com",
                     }
                   ]
                 };
-  
-                // Envie a mensagem de e-mail
+
+                // Envia a mensagem de e-mail
                 transporter.sendMail(mailOptions, (error, info) => {
                   if (error) {
                     console.log('Erro ao enviar e-mail:', error);
@@ -110,7 +113,49 @@ function AplicacaoController() {
     });
   }
 
-
+  async function indicacoes(req, res) {
+    try {
+      // Recupere a sessão ativa do usuário
+      const usuario_id = checkAuth(req);
+      const sessaoAtiva = await Sessoes.findOne({ where: { usuario_id } });
+  
+      if (!sessaoAtiva) {
+        return res.status(404).json({ error: 'Nenhuma sessão ativa encontrada para o usuário' });
+      }
+  
+      const session_id = sessaoAtiva.session_id;
+  
+      // Inicialize o cliente Venom-bot com a sessão ativa
+      const venomClient = await venom.create({
+        session: session_id, // Utilize o session_id como nome da sessão
+        sessionToken: sessaoAtiva.session, // Ajuste aqui para acessar diretamente a variável de sessão
+        // Outras configurações
+      });
+  
+      // Capturar o número do destinatário do corpo da requisição
+      const { numeroDestinatario } = req.body;
+  
+      if (!numeroDestinatario) {
+        return res.status(400).json({ error: 'Número do destinatário não fornecido no formulário' });
+      }
+  
+      // Neste ponto, você pode usar venomClient para enviar mensagens
+      const mensagem = 'Sua mensagem de texto aqui!';
+  
+      venomClient.sendText(`${numeroDestinatario}@c.us`, mensagem)
+        .then((message) => {
+          console.log('Mensagem enviada com sucesso:', message);
+          res.status(200).json({ message: 'Mensagem enviada com sucesso' });
+        })
+        .catch((error) => {
+          console.error('Erro ao enviar mensagem:', error);
+          res.status(500).json({ error: 'Erro ao enviar mensagem' });
+        });
+    } catch (error) {
+      console.error('Erro ao processar indicações:', error);
+      res.status(500).json({ error: 'Erro ao processar indicações' });
+    }
+  }
 
 
 
@@ -203,12 +248,8 @@ function AplicacaoController() {
   
   return {
     criarSessoesVenom: criarSessoesVenom,
-    visualizarRecompensas:[checkAuthUser, visualizarRecompensas],
-    localizarRecompensas: localizarRecompensas,
-    cadastrarRecompensas: cadastrarRecompensas,
-    atualizarRecompensas: atualizarRecompensas,
-    excluirRecom: excluirRecom,
-    notFound: notFound
+    indicacoes: indicacoes
+    
   };
 }
 
