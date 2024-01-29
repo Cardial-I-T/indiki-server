@@ -247,7 +247,7 @@ function AplicacaoController() {
   };
   
   return {
-    criarSessoesVenom: criarSessoesVenom,
+    criarSessoesVenom: [checkAuth, criarSessoesVenom], 
     indicacoes: indicacoes
     
   };
