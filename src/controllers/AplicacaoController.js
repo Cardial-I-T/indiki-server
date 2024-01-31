@@ -248,8 +248,8 @@ function AplicacaoController() {
   };
   
   return {
-    criarSessoesVenom: [checkAuth, criarSessoesVenom], 
-    indicacoes: [checkAuthUser,indicacoes]
+    criarSessoesVenom:  criarSessoesVenom, 
+    indicacoes: indicacoes
     
   };
 }
