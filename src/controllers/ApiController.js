@@ -1,6 +1,7 @@
 const Usuario = require('../model/Usuarios').Usuario;
 const modelUsuario = require('../model/Usuarios');
-
+const checkAuthUser = require('../utils/checkAuthUser');
+const checkAuth = require('../utils/checkAuth');
 const axios = require('axios');
 
 function ApiController() {
@@ -106,21 +107,14 @@ async function visualizarUsuario(req, res) {
         where: { email, senha },
       });
   
-      if (foundUser) {
-        // Autenticação bem-sucedida, armazene o usuario_id na sessão
-        req.session.usuario_id = foundUser.usuario_id;
-  
-        if (foundUser.admin === true) {
-          // Usuário é administrador
-          res.status(200);
-        } else {
-          // Usuário não é administrador
-          res.redirect('/index');
-        }
+      if (foundUser.admin === true) {
+        // Usuário é administrador
+        checkAuth(req, res);
       } else {
-        // Autenticação falhou
-        res.status(401).json({ error: 'Usuário ou senha inválidos' });
+        // Usuário não é administrador, chame a função checkAuthUser
+        checkAuthUser(req, res);
       }
+    
     } catch (error) {
       console.error('Erro ao autenticar usuário:', error);
       res.status(500).json({ errorMessage: 'Erro ao autenticar usuário', error: error.message });

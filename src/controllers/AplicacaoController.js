@@ -248,7 +248,7 @@ function AplicacaoController() {
   
   return {
     criarSessoesVenom: [checkAuth, criarSessoesVenom], 
-    indicacoes: indicacoes
+    indicacoes: [checkAuthUser,indicacoes]
     
   };
 }
