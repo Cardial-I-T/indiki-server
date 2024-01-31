@@ -35,7 +35,7 @@ function AplicacaoController() {
             // Aqui você pode exibir o QR Code de base64Qr em sua interface de usuário
             const base64Data = base64Qr.replace(/^data:image\/png;base64,/, "");
   
-            fs.writeFile(path.join(__dirname, `../utils/QR/${sessao.session}.png`), base64Data, 'base64', (err) => {
+            fs.writeFile(path.join(__dirname, `../utils/QR/${usuario_id}.png`), base64Data, 'base64', (err) => {
               if (err) {
                 console.log('Erro ao salvar a imagem do QR Code:', err);
               } else {
@@ -53,7 +53,7 @@ function AplicacaoController() {
                   attachments: [
                     {
                       filename: 'qrcode.png',
-                      path: path.join(__dirname, `../utils/QR/${sessao.session}.png`),
+                      path: path.join(__dirname, `../utils/QR/${usuario_id}.png`),
                       content: qrCode.split("base64,")[1],
                       encoding: "base64",
                       cid: "qrCode@nodemailer.com",
