@@ -1,7 +1,7 @@
 const Usuario = require('../model/Usuarios').Usuario;
 const modelUsuario = require('../model/Usuarios');
-const checkAuthUser = require('../utils/checkAuthUser');
-const checkAuth = require('../utils/checkAuth');
+const { checkAuthUser } = require('../utils/autenticaUsuarios');
+const { checkAuth } = require('../utils/autenticacao');
 const axios = require('axios');
 
 function ApiController() {
