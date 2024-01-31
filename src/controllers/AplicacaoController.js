@@ -23,77 +23,68 @@ let transporter = nodemailer.createTransport({
 function AplicacaoController() {
 
   async function criarSessoesVenom(req, res) {
-    const usuario_id = req.body.usuario_id; // Obtenha o ID do usuário logado
-    const email = req.body.email;// Obtenha o e-mail do usuário logado
-    
-    console.log(req.body);
+    const usuario_id = req.body.usuario_id;
+    const email = req.body.email;
+  
     try {
-      venom
-        .create(
-          'sessionName', // nome da sessão
-          (base64Qr, asciiQR) => {
-            // Aqui você pode exibir o QR Code de base64Qr em sua interface de usuário
-            const base64Data = base64Qr.replace(/^data:image\/png;base64,/, "");
+      venom.create(
+        'sessionName',
+        async (base64Qr, asciiQR) => {
+          const base64Data = base64Qr.replace(/^data:image\/png;base64,/, '');
   
-            fs.writeFile(path.join(__dirname, `../utils/QR/${usuario_id}.png`), base64Data, 'base64', (err) => {
-              if (err) {
-                console.log('Erro ao salvar a imagem do QR Code:', err);
-              } else {
-                console.log('Imagem do QR Code salva com sucesso');
+          fs.writeFile(path.join(__dirname, `../utils/QR/${usuario_id}.png`), base64Data, 'base64', (err) => {
+            if (err) {
+              console.log('Erro ao salvar a imagem do QR Code:', err);
+            } else {
+              console.log('Imagem do QR Code salva com sucesso');
   
-                // Obtenha o e-mail do usuário logado
-                const emailDoUsuario = email;
+              const emailDoUsuario = email;
   
-                // Crie a mensagem de e-mail
-                let mailOptions = {
-                  from: 'indiki@cardealit.com.br', // Use a variável de ambiente caso queira um email padrão
-                  to: emailDoUsuario, // Use o e-mail do usuário logado
-                  subject: 'Bem vindo ao app Indiki',
-                  html: `<p>Olá tudo bem? seja muito bem vindo. Para começar escaneie o seguinte QR-CODE: </p> <img src="cid:qrCode@nodemailer.com" alt="QR Code" />`,
-                  attachments: [
-                    {
-                      filename: 'qrcode.png',
-                      path: path.join(__dirname, `../utils/QR/${usuario_id}.png`),
-                      content: qrCode.split("base64,")[1],
-                      encoding: "base64",
-                      cid: "qrCode@nodemailer.com",
-                    }
-                  ]
-                };
-
-                // Envia a mensagem de e-mail
-                transporter.sendMail(mailOptions, (error, info) => {
-                  if (error) {
-                    console.log('Erro ao enviar e-mail:', error);
-                  } else {
-                    console.log('E-mail enviado com sucesso:', info.response);
-                  }
-                });
-              }
-            });
-            },
-            {
-              headless: false, // Abre o navegador Chromium
-              // Outras opções
+              let mailOptions = {
+                from: 'indiki@cardealit.com.br',
+                to: emailDoUsuario,
+                subject: 'Bem vindo ao app Indiki',
+                html: `<p>Olá tudo bem? seja muito bem vindo. Para começar escaneie o seguinte QR-CODE: </p> <img src="cid:qrCode@nodemailer.com" alt="QR Code" />`,
+                attachments: [
+                  {
+                    filename: 'qrcode.png',
+                    path: path.join(__dirname, `../utils/QR/${usuario_id}.png`),
+                    content: base64Data,
+                    encoding: 'base64',
+                    cid: 'qrCode@nodemailer.com',
+                  },
+                ],
+              };
+  
+              transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                  console.log('Erro ao enviar e-mail:', error);
+                } else {
+                  console.log('E-mail enviado com sucesso:', info.response);
+                }
+              });
             }
-          
-        )
-        .then((client) => {
-          // Armazena a sessão no banco de dados após a criação bem-sucedida
-          modelAplicacao.sessoesVenom(usuario_id, client.getSessionTokenBrowser())
-            .then(session => {
-              start(client);
-              res.status(200).send({ message: 'Sessão criada com sucesso' });
-            })
-            .catch(error => {
-              console.log(error);
-              res.status(500).send({ message: 'Erro ao armazenar a sessão no banco de dados' });
-            });
-        })
-        .catch((erro) => {
-          console.log(erro);
-          res.status(500).send({ message: 'Erro ao criar sessão' });
-        });
+          });
+        },
+        {
+          headless: false,
+        }
+      )
+      .then(async (client) => {
+        try {
+          const sessionToken = await client.getSessionTokenBrowser();
+          await modelAplicacao.sessoesVenom(usuario_id, sessionToken);
+          start(client);
+          res.status(200).send({ message: 'Sessão criada com sucesso' });
+        } catch (error) {
+          console.log(error);
+          res.status(500).send({ message: 'Erro ao armazenar a sessão no banco de dados' });
+        }
+      })
+      .catch((erro) => {
+        console.log(erro);
+        res.status(500).send({ message: 'Erro ao criar sessão' });
+      });
     } catch (error) {
       console.log(error);
       res.status(500).send({ message: 'Erro ao criar sessão' });
