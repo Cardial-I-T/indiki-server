@@ -35,19 +35,39 @@ Sessoes.init({
 Sessoes.belongsTo(Usuarios.Usuario, { foreignKey: 'usuario_id' });
 Usuarios.Usuario.hasMany(Sessoes, { foreignKey: 'usuario_id' });
 
-function sessoesVenom(usuario_id, token) {
+async function sessoesVenom(usuario_id, session) {
+  console.log('session:', session);
+  
   // Crie uma nova sessão com o usuario_id e o token
-  return Sessao.create({
+  return Sessoes.create({
     usuario_id: usuario_id,
-    token: token
+    session: session
   });
 }
 
+async function loadSessionData(usuario_id) {
+  try {
+      const sessao = await Sessoes.findOne({
+          where: { usuario_id: usuario_id }
+      });
+
+      if (sessao) {
+          return sessao.session;
+      } else {
+          console.error('Nenhuma entrada encontrada para o usuário especificado.');
+          
+      }
+  } catch (error) {
+      console.error('Erro ao carregar dados da sessão:', error);
+      
+  }
+}
 
 
 const modelAplicacao = {
   Sessoes,
-  sessoesVenom
+  sessoesVenom,
+  loadSessionData
 }; 
 
 module.exports = modelAplicacao

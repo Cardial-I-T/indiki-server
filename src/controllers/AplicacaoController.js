@@ -1,11 +1,11 @@
-const { checkAuthUser } = require('../utils/autenticaUsuarios');
-const { checkAuth } = require('../utils/autenticacao');
+const { Client, RemoteAuth } = require('whatsapp-web.js');
 const Sessoes = require('../model/Aplicacao').Sessoes; 
+const { MongoStore } = require('wwebjs-mongo');
+const mongoose = require('mongoose');
 const modelAplicacao = require('../model/Aplicacao');
 const axios = require('axios');
-const venom = require('venom-bot');
-const fs = require('fs');
-const path = require('path');
+const QRCode = require('qrcode-generator');
+
 require('dotenv').config();
 const nodemailer = require('nodemailer');
 
@@ -22,132 +22,98 @@ let transporter = nodemailer.createTransport({
 
 function AplicacaoController() {
 
-  async function criarSessoesVenom(req, res) {
+ 
+  async function criarSessoesWhatsApp(req, res) {
     const usuario_id = req.body.usuario_id;
     const email = req.body.email;
-  
-    try {
-      venom.create(
-        'sessionName',
-        async (base64Qr, asciiQR) => {
-          const base64Data = base64Qr.replace(/^data:image\/png;base64,/, '');
-  
-          fs.writeFile(path.join(__dirname, `../utils/QR/${usuario_id}.png`), base64Data, 'base64', (err) => {
-            if (err) {
-              console.log('Erro ao salvar a imagem do QR Code:', err);
-            } else {
-              console.log('Imagem do QR Code salva com sucesso');
-  
-              const emailDoUsuario = email;
-  
-              let mailOptions = {
-                from: 'indiki@cardealit.com.br',
-                to: emailDoUsuario,
-                subject: 'Bem vindo ao app Indiki',
-                html: `<p>Olá tudo bem? seja muito bem vindo. Para começar escaneie o seguinte QR-CODE: </p> <img src="cid:qrCode@nodemailer.com" alt="QR Code" />`,
-                attachments: [
-                  {
-                    filename: 'qrcode.png',
-                    path: path.join(__dirname, `../utils/QR/${usuario_id}.png`),
-                    content: base64Data,
-                    encoding: 'base64',
-                    cid: 'qrCode@nodemailer.com',
-                  },
-                ],
-              };
-  
-              transporter.sendMail(mailOptions, (error, info) => {
-                if (error) {
-                  console.log('Erro ao enviar e-mail:', error);
-                } else {
-                  console.log('E-mail enviado com sucesso:', info.response);
-                }
-              });
-            }
-          });
-        },
-        {
-          headless: false,
-        }
-      )
-      .then(async (client) => {
-        try {
-          const sessionToken = await client.getSessionTokenBrowser();
-          await modelAplicacao.sessoesVenom(usuario_id, sessionToken);
-          start(client);
-          res.status(200).send({ message: 'Sessão criada com sucesso' });
-        } catch (error) {
-          console.log(error);
-          res.status(500).send({ message: 'Erro ao armazenar a sessão no banco de dados' });
-        }
+
+    // Flag para controlar se o e-mail foi enviado
+    let emailEnviado = false;
+
+    const clientId = usuario_id;
+
+   
+
+// Load the session data
+mongoose.connect(process.env.MONGODB_URI).then(() => {
+  const store = new MongoStore({ mongoose: mongoose });
+  const client = new Client({
+      authStrategy: new RemoteAuth({
+          clientId: clientId,
+          store: store,
+          backupSyncIntervalMs: 300000
       })
-      .catch((erro) => {
-        console.log(erro);
-        res.status(500).send({ message: 'Erro ao criar sessão' });
-      });
-    } catch (error) {
-      console.log(error);
-      res.status(500).send({ message: 'Erro ao criar sessão' });
-    }
-  }
-  
-  
+  });
+  client.initialize();
+});
+ 
 
-  function start(client) {
-    client.onMessage((message) => {
-      if (message.body === 'Olá' && message.isGroupMsg === false) {
-        client
-          .sendText(message.from, 'Bem vindo ao Indiki!')
-          .then((result) => {
-            console.log('Result: ', result); //return object success
-          })
-      }
+     // Evento 'qr' é acionado quando o código QR é gerado
+     client.on('qr', (qr) => {
+      console.log('QR Code gerado:', qr);
+      
+      
+      
+       // Verifica se o e-mail já foi enviado
+    if (!emailEnviado) {
+      
+     
+      // Cria o QR code usando a biblioteca qrcode-generator
+      const qrcode = QRCode(0, 'L');
+        qrcode.addData(qr);
+        qrcode.make();
+
+        // Obtém o conteúdo do QR code em formato Base64
+        const qrcodeBase64 = qrcode.createDataURL(5, 5);
+
+            
+            // Envia o QR Code por e-mail
+            let mailOptions = {
+                from: process.env.EMAIL,
+                to: email,
+                subject: 'Bem vindo ao app Indiki',
+                html: `<p>Olá tudo bem? Seja muito bem vindo. Para começar, escaneie o seguinte QR-CODE: </p> <img src="cid:qrCode@nodemailer.com" alt="QR Code" />`,
+                attachments: [
+                    {
+                        filename: 'qrcode.png',
+                        content: qrcodeBase64.split(';base64,').pop(),
+                        encoding: 'base64',
+                        cid: 'qrCode@nodemailer.com',
+                    },
+                ],
+            };
+
+            transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                    console.log('Erro ao enviar e-mail:', error);
+                } else {
+                    console.log('E-mail enviado com sucesso:', info.response);
+
+                    // Atualiza a variável de controle para indicar que o e-mail foi enviado
+                    emailEnviado = true;
+                }
+            });
+        }
     });
-  }
 
-  async function indicacoes(req, res) {
-    try {
-      // Recupere a sessão ativa do usuário
-      const usuario_id = req.body.usuario_id;
-      const sessaoAtiva = await Sessoes.findOne({ where: { usuario_id } });
+    
+   // Evento 'authenticated' é acionado quando a autenticação é bem-sucedida
+client.on('authenticated', async () => {
   
-      if (!sessaoAtiva) {
-        return res.status(404).json({ error: 'Nenhuma sessão ativa encontrada para o usuário' });
-      }
-  
-      const session_id = sessaoAtiva.session_id;
-  
-      // Inicialize o cliente Venom-bot com a sessão ativa
-      const venomClient = await venom.create({
-        session: session_id, // Utilize o session_id como nome da sessão
-        sessionToken: sessaoAtiva.session, // Ajuste aqui para acessar diretamente a variável de sessão
-        // Outras configurações
-      });
-  
-      // Capturar o número do destinatário do corpo da requisição
-      const { numeroDestinatario } = req.body;
-  
-      if (!numeroDestinatario) {
-        return res.status(400).json({ error: 'Número do destinatário não fornecido no formulário' });
-      }
-  
-      // Neste ponto, você pode usar venomClient para enviar mensagens
-      const mensagem = 'Sua mensagem de texto aqui!';
-  
-      venomClient.sendText(`${numeroDestinatario}@c.us`, mensagem)
-        .then((message) => {
-          console.log('Mensagem enviada com sucesso:', message);
-          res.status(200).json({ message: 'Mensagem enviada com sucesso' });
-        })
-        .catch((error) => {
-          console.error('Erro ao enviar mensagem:', error);
-          res.status(500).json({ error: 'Erro ao enviar mensagem' });
-        });
-    } catch (error) {
-      console.error('Erro ao processar indicações:', error);
-      res.status(500).json({ error: 'Erro ao processar indicações' });
-    }
-  }
+    res.status(200).send({ message: 'Sessão criada com sucesso' });
+});
+
+
+
+};
+
+
+
+
+
+
+
+
 
 
 
@@ -239,10 +205,11 @@ function AplicacaoController() {
   };
   
   return {
-    criarSessoesVenom:  criarSessoesVenom, 
-    indicacoes: indicacoes
+    criarSessoesWhatsApp:  criarSessoesWhatsApp 
+   
     
   };
 }
+
 
 module.exports = AplicacaoController;

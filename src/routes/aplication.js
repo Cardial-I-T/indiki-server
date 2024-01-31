@@ -9,8 +9,8 @@ router.use(express.json()); // Middleware para interpretar o corpo da solicitaç
 
 
 //Rotas do API do Sistema Venom
-router.post('/register-session', aplicacaoController.criarSessoesVenom);
-router.post('/indicar', aplicacaoController.indicacoes);
+router.post('/register-session', aplicacaoController.criarSessoesWhatsApp);
+//router.post('/indicar', aplicacaoController.indicacoes);
 //router.put('/recompensas/:recom_id', aplicacaoController.atualizarRecompensas);
 //router.delete('/recompensas/:recom_id', aplicacaoController.excluirRecom);
 
