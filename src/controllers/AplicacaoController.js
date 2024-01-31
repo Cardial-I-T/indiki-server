@@ -44,8 +44,7 @@ mongoose.connect(process.env.MONGODB_URI).then(() => {
           backupSyncIntervalMs: 300000
       })
   });
-  client.initialize();
-});
+
  
 
      // Evento 'qr' é acionado quando o código QR é gerado
@@ -103,8 +102,39 @@ client.on('authenticated', async () => {
     res.status(200).send({ message: 'Sessão criada com sucesso' });
 });
 
+client.initialize();
+});
 
+};
 
+async function indicar(req, res) {
+  const usuario_id = req.body.usuario_id;
+  const telefone = req.body.telefone;
+  const name = req.body.nome;
+
+  const clientId = usuario_id;
+
+   // Conecte-se ao MongoDB e carregue os dados da sessão
+   await mongoose.connect(process.env.MONGODB_URI);
+   const store = new MongoStore({ mongoose: mongoose });
+   const sessionData = await store.extract({ session: clientId });
+
+   if (sessionData) {
+       const client = new Client({
+           session: sessionData
+       });
+
+       client.on('ready', async () => {
+           console.log('Client is ready!');
+           const phoneNumber = "+55"+telefone+"@c.us";
+           const text = `Olá, tudo bem ${name}? Você foi indicado a experimentar o nosso aplicativo. Participe, indique amigos e ganhe recompensas.`;
+           await client.sendMessage(phoneNumber, text);
+       });
+
+       client.initialize();
+   } else {
+       console.log("Sessão não encontrada!");
+   }
 };
 
 
@@ -112,101 +142,9 @@ client.on('authenticated', async () => {
 
 
 
-
-
-
-
-
-    async function visualizarRecompensas(req, res) {
-        try {
-          const recompensas = await modelRecompensas.Recompensas.findAll();
-      
-          if (recompensas.length === 0) {
-            return res.status(404).json({ error: 'Nenhuma recompensa encontrada' });
-          }
-                      
-          res.json(recompensas);
-        } catch (error) {
-          console.error('Erro ao obter recompensas:', error);
-          res.status(500).json({ error: 'Erro ao obter recompensas' });
-        }
-      }
-
-  async function localizarRecompensas (req, res) {
-    const { recom_id, nome, pontos, estoque } = req.query;
-    const conditions = {};
-  
-    if (recom_id) {
-      conditions.recom_id = recom_id;
-    }
-    if (nome) {
-      conditions.nome = nome;
-    }
-    if (pontos) {
-      conditions.pontos = pontos;
-    }
-    if (estoque) {
-        conditions.estoque = estoque;
-      }
-  
-    try {
-      const nome = await modelRecompensas.Recompensas.findByFields(conditions);
-  
-      if (nome) {
-        res.json(nome);
-      } else {
-        res.status(404).json({ errorMessage: 'Recompensa não encontrada' });
-      }
-    } catch (error) {
-      console.error('Erro ao buscar recompensas:', error);
-      res.status(500).json({ errorMessage: 'Erro ao buscar recompensas',  error: error.message  });
-    }
-  };
-
-  async function cadastrarRecompensas(req, res) {
-    const { nome, pontos, estoque } = req.body;
-    console.log(req.body);
-    try {
-      await modelRecompensas.criarRecompensas(nome, pontos, estoque);
-      res.json({ message: `Recompensa ${nome} cadastrado com sucesso` });
-    } catch (error) {
-      console.error('Erro ao cadastrar recompensa:', error);
-      res.status(500).json({ errorMessage: 'Erro ao cadastrar recompensa', error: error.message  });
-    }
-  };
-
-  async function atualizarRecompensas (req, res) {
-    const { recom_id } = req.params;
-    const { nome, pontos, estoque } = req.body;
-  
-    try {
-      await modelRecompensas.updateRecompensas(recom_id, nome, pontos, estoque);
-      res.json({ message: `Recompensa ${recom_id} atualizada com sucesso` });
-    } catch (error) {
-      console.error('Erro ao atualizar usuário:', error);
-      res.status(500).json({ errorMessage: 'Erro ao atualizar usuário', error: error.message  });
-    }
-  }
-
-  async function excluirRecom(req, res) {
-    const { recom_id } = req.params;
-  
-    try {
-      await modelRecompensas.excluirRecompensas(recom_id);
-      res.json({ message: `Recompensa ${recom_id} excluído com sucesso` });
-    } catch (error) {
-      console.error('Erro ao excluir recompensa:', error);
-      res.status(500).json({ errorMessage: 'Erro ao excluir recompensa', error });
-    }
-  };
-  
-  function notFound(request, response) {
-    return response.json({ errorMessage: 'Rota não encontrada' });
-  };
-  
   return {
-    criarSessoesWhatsApp:  criarSessoesWhatsApp 
-   
+    criarSessoesWhatsApp:  criarSessoesWhatsApp, 
+    indicar: indicar
     
   };
 }
