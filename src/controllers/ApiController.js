@@ -112,7 +112,7 @@ async function visualizarUsuario(req, res) {
   
         if (foundUser.admin === true) {
           // Usuário é administrador
-          res.redirect('/cadastrar');
+          res.status(200);
         } else {
           // Usuário não é administrador
           res.redirect('/index');
