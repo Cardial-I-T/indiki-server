@@ -107,12 +107,15 @@ async function visualizarUsuario(req, res) {
         where: { email, senha },
       });
   
-      if (foundUser.admin === true) {
-        // Usuário é administrador
-        checkAuth(req, res);
+      if (foundUser) {
+        // Autenticação bem-sucedida, armazene o usuario_id na sessão
+        req.session.usuario_id = foundUser.usuario_id;
+  
+        // Retorne um objeto JSON que inclua um campo admin
+        res.json({ admin: foundUser.admin });
       } else {
-        // Usuário não é administrador, chame a função checkAuthUser
-        checkAuthUser(req, res);
+        // Autenticação falhou
+        res.status(401).json({ error: 'Usuário ou senha inválidos' });
       }
     
     } catch (error) {

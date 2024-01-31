@@ -23,8 +23,9 @@ let transporter = nodemailer.createTransport({
 function AplicacaoController() {
 
   async function criarSessoesVenom(req, res) {
-    const usuario_id = checkAuth(req); // Obtenha o ID do usuário logado
-    const email = checkAuth(req); // Obtenha o e-mail do usuário logado
+    const usuario_id = req.body.usuario_id; // Obtenha o ID do usuário logado
+    const email = req.body.email;// Obtenha o e-mail do usuário logado
+    
     console.log(req.body);
     try {
       venom
@@ -116,7 +117,7 @@ function AplicacaoController() {
   async function indicacoes(req, res) {
     try {
       // Recupere a sessão ativa do usuário
-      const usuario_id = checkAuth(req);
+      const usuario_id = req.body.usuario_id;
       const sessaoAtiva = await Sessoes.findOne({ where: { usuario_id } });
   
       if (!sessaoAtiva) {
